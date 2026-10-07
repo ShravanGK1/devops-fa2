@@ -1,0 +1,137 @@
+name: FinTech Microservices CI/CD & DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # ==========================================
+  # STAGE 1: Code Quality, Lint & Unit Tests
+  # ==========================================
+  test-and-lint:
+    name: 🧪 Automated Testing & Linting (Student 2)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest httpx
+          pip install -r services/payment_service/requirements.txt
+          pip install -r services/fraud_service/requirements.txt
+
+      - name: Lint with Flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 services/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings
+          flake8 services/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Run Payment Service Unit Tests
+        run: |
+          export PYTHONPATH=.
+          pytest services/payment_service/tests/ -v
+
+      - name: Run Fraud Service Unit Tests
+        run: |
+          export PYTHONPATH=.
+          pytest services/fraud_service/tests/ -v
+
+  # ==========================================
+  # STAGE 2: DevSecOps Security & Vulnerability Scan
+  # ==========================================
+  security-scan:
+    name: 🛡️ DevSecOps SAST & Vulnerability Audit
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Run Custom Security Scan Script
+        run: |
+          python cicd/scripts/security_scan.py
+
+      - name: Trivy Vulnerability Scanner (Docker & FS)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0' # Non-blocking in CI demo mode
+
+  # ==========================================
+  # STAGE 3: Multi-Service Docker Container Build
+  # ==========================================
+  build-containers:
+    name: 🐳 Container Image Build & Validation
+    needs: security-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Payment Gateway Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/payment_service
+          push: false
+          tags: fintech-payment-service:latest
+
+      - name: Build Fraud Detection Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/fraud_service
+          push: false
+          tags: fintech-fraud-service:latest
+
+      - name: Build Frontend Portal Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: fintech-frontend-portal:latest
+
+  # ==========================================
+  # STAGE 4: Automated Deploy & Smoke Test
+  # ==========================================
+  deploy-and-smoke-test:
+    name: 🚀 Automated Deployment & Smoke Testing
+    needs: build-containers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Start Docker Compose Microservices Stack
+        run: |
+          docker compose up -d payment_service fraud_service frontend_portal prometheus
+
+      - name: Wait for Services Health Check
+        run: |
+          sleep 10
+          docker compose ps
+
+      - name: Execute Post-Deployment Smoke Test
+        run: |
+          pip install requests
+          python cicd/scripts/smoke_test.py --host http://localhost:8000
+
+      - name: Teardown Test Stack
+        if: always()
+        run: |
+          docker compose down

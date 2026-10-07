@@ -1,0 +1,13 @@
+global:
+  resolve_timeout: 1m
+
+route:
+  group_by: ['alertname', 'tier']
+  group_wait: 5s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'sre-team-receiver'
+
+receivers:
+  - name: 'sre-team-receiver'
+    webhook_configs: []

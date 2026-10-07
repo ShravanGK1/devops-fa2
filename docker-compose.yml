@@ -1,0 +1,134 @@
+version: '3.8'
+
+networks:
+  fintech-network:
+    driver: bridge
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+
+services:
+  # =================================================================
+  # 1. CORE PAYMENT GATEWAY (Student 1)
+  # =================================================================
+  payment_service:
+    build:
+      context: ./services/payment_service
+      dockerfile: Dockerfile
+    container_name: fintech_payment_service
+    restart: always
+    environment:
+      - FRAUD_SERVICE_URL=http://fraud_service:8001
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    networks:
+      - fintech-network
+    depends_on:
+      - fraud_service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # =================================================================
+  # 2. FRAUD DETECTION MICROSERVICE (Student 1)
+  # =================================================================
+  fraud_service:
+    build:
+      context: ./services/fraud_service
+      dockerfile: Dockerfile
+    container_name: fintech_fraud_service
+    restart: always
+    environment:
+      - PORT=8001
+    ports:
+      - "8001:8001"
+    networks:
+      - fintech-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # =================================================================
+  # 3. INTERACTIVE REACT SRE & DEV CONTROL CONSOLE (Student 1 & 4)
+  # =================================================================
+  frontend_portal:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fintech_frontend_portal
+    restart: always
+    ports:
+      - "8080:80"
+    networks:
+      - fintech-network
+    depends_on:
+      - payment_service
+
+  # =================================================================
+  # 4. PROMETHEUS METRICS TIME-SERIES ENGINE (Student 3)
+  # =================================================================
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: fintech_prometheus
+    restart: always
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - fintech-network
+
+  # =================================================================
+  # 5. ALERTMANAGER INCIDENT ROUTER (Student 3)
+  # =================================================================
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: fintech_alertmanager
+    restart: always
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    networks:
+      - fintech-network
+
+  # =================================================================
+  # 6. GRAFANA OBSERVABILITY & SRE DASHBOARDS (Student 3 & 4)
+  # =================================================================
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: fintech_grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/fintech_golden_signals.json
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - fintech-network
+    depends_on:
+      - prometheus

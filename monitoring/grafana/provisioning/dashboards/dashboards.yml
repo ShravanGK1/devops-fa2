@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'FinTech SRE Dashboards'
+    orgId: 1
+    folder: 'FinTech Production'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

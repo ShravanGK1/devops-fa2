@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REGISTRY = 'docker.io/fintech'
+        VERSION = "1.0.${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code from VCS repository...'
+                checkout scm
+            }
+        }
+
+        stage('Lint & Unit Tests') {
+            steps {
+                echo 'Executing Automated Unit Tests & PyTest Suite...'
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install -r services/payment_service/requirements.txt
+                    pip install -r services/fraud_service/requirements.txt
+                    export PYTHONPATH=.
+                    pytest services/payment_service/tests/
+                    pytest services/fraud_service/tests/
+                '''
+            }
+        }
+
+        stage('DevSecOps Security Audit') {
+            steps {
+                echo 'Running Static Application Security Testing (SAST)...'
+                sh '''
+                    python3 cicd/scripts/security_scan.py
+                '''
+            }
+        }
+
+        stage('Container Image Build') {
+            steps {
+                echo 'Building Multi-Stage Docker Images...'
+                sh '''
+                    docker build -t fintech-payment-service:${VERSION} ./services/payment_service
+                    docker build -t fintech-fraud-service:${VERSION} ./services/fraud_service
+                    docker build -t fintech-frontend-portal:${VERSION} ./services/frontend_portal
+                '''
+            }
+        }
+
+        stage('Deploy Staging & Smoke Test') {
+            steps {
+                echo 'Deploying Docker Compose Stack in Staging Environment...'
+                sh '''
+                    docker compose up -d
+                    sleep 10
+                    python3 cicd/scripts/smoke_test.py --host http://localhost:8000
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline Execution Completed.'
+        }
+        failure {
+            echo 'Alert: Pipeline failed! Triggering SRE notification.'
+        }
+    }
+}

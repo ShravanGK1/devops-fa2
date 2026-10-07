@@ -1,0 +1,46 @@
+groups:
+  - name: fintech_sre_alerts
+    rules:
+      # 1. High HTTP 5xx Error Rate Alert (> 5% errors over 1 minute)
+      - alert: HighHttpErrorRate
+        expr: (sum(rate(payment_http_requests_total{status_code=~"5.."}[1m])) / sum(rate(payment_http_requests_total[1m]))) * 100 > 5
+        for: 15s
+        labels:
+          severity: critical
+          tier: payment-core
+        annotations:
+          summary: "High HTTP 5xx Server Error Rate Detected (> 5%)"
+          description: "Payment Gateway is experiencing elevated 5xx error rates, consuming SRE error budget rapidly."
+
+      # 2. SRE Latency SLO Breach Alert (p95 Latency > 300ms)
+      - alert: PaymentLatencySLOBreached
+        expr: histogram_quantile(0.95, sum(rate(payment_http_request_duration_seconds_bucket[1m])) by (le)) > 0.3
+        for: 15s
+        labels:
+          severity: warning
+          tier: sre-slo
+        annotations:
+          summary: "Payment Latency SLO Breach: p95 > 300ms"
+          description: "95th percentile latency is currently above the 300ms threshold."
+
+      # 3. Downstream Service / Circuit Breaker Alert
+      - alert: FraudCircuitBreakerTripped
+        expr: payment_circuit_breaker_state == 2
+        for: 10s
+        labels:
+          severity: critical
+          tier: resilience
+        annotations:
+          summary: "Payment Circuit Breaker is OPEN"
+          description: "Downstream Fraud Detection service has degraded. Fallback heuristic mode active."
+
+      # 4. Service Down Alert
+      - alert: ServiceDown
+        expr: up{job=~"payment-gateway|fraud-detection-engine"} == 0
+        for: 10s
+        labels:
+          severity: page
+          tier: infrastructure
+        annotations:
+          summary: "Microservice Instance Down: {{ $labels.instance }}"
+          description: "Prometheus cannot scrape {{ $labels.job }} for more than 10 seconds."

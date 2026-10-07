@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTech SRE & DevOps Observability Platform | FA-2 Presentation Suite</title>
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for Live Faculty Observability Graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="logo-shield">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">FinTech DevOps & SRE Platform</div>
+          <div class="brand-subtitle">FA-2 Group Evaluation Suite • 4-Member Architecture</div>
+        </div>
+      </div>
+
+      <!-- Quick Control Actions -->
+      <div class="nav-actions">
+        <button id="btn-guided-demo" class="btn btn-glow">
+          <span>✨</span> Start 4-Student Guided Demo
+        </button>
+        <div class="system-status-pill online" id="global-status-pill">
+          <span class="pulse-dot"></span> System Operational
+        </div>
+      </div>
+    </header>
+
+    <!-- Student Role Navigator Tabs -->
+    <nav class="role-tabs">
+      <button class="tab-btn active" data-tab="tab-overview">
+        <span class="role-pill role-s1">Student 1</span>
+        <span>Microservices & Payments</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-cicd">
+        <span class="role-pill role-s2">Student 2</span>
+        <span>CI/CD & DevSecOps Pipeline</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-observability">
+        <span class="role-pill role-s3">Student 3</span>
+        <span>Prometheus & RED Metrics</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-sre">
+        <span class="role-pill role-s4">Student 4</span>
+        <span>SRE SLI/SLO & Chaos Suite</span>
+      </button>
+    </nav>
+
+    <!-- TAB 1: Student 1 - Microservices, Payments & Circuit Breaker -->
+    <section id="tab-overview" class="tab-content active">
+      <div class="student-callout role-1-border">
+        <div class="callout-header">
+          <span class="badge badge-s1">STUDENT 1 MODULE</span>
+          <h3>Microservices Architecture, Asynchronous Payments & Circuit Breaker</h3>
+        </div>
+        <p>Demonstrates decoupled FastAPI services (Payment Gateway `:8000` & Fraud Engine `:8001`), Docker containerization, and downstream fault isolation with automated Circuit Breaker state transitions.</p>
+      </div>
+
+      <div class="grid-2col">
+        <!-- Live Payment Processor Card -->
+        <div class="card glass-card">
+          <div class="card-title-row">
+            <h4>💳 Real-Time Payment Terminal</h4>
+            <span class="badge-accent" id="circuit-badge">Circuit: CLOSED (Healthy)</span>
+          </div>
+
+          <form id="payment-form">
+            <div class="input-grid">
+              <div class="input-group">
+                <label>Sender Account ID</label>
+                <input type="text" id="acc-sender" value="ACC-10492" required>
+              </div>
+              <div class="input-group">
+                <label>Beneficiary Account</label>
+                <input type="text" id="acc-recipient" value="REC-88401" required>
+              </div>
+              <div class="input-group">
+                <label>Amount (USD $)</label>
+                <input type="number" id="pay-amount" value="250.00" step="0.01" min="1" required>
+              </div>
+              <div class="input-group">
+                <label>Payment Method</label>
+                <select id="pay-method">
+                  <option value="CREDIT_CARD">Credit Card (Stripe / Visa)</option>
+                  <option value="DEBIT_CARD">Debit Card (Mastercard)</option>
+                  <option value="BANK_WIRE">FedWire Transfer</option>
+                  <option value="CRYPTO">Crypto (High Volatility)</option>
+                  <option value="PREPAID_CARD">Prepaid Virtual Card</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="btn-cluster">
+              <button type="submit" class="btn btn-primary">Process Single Payment</button>
+              <button type="button" id="btn-burst" class="btn btn-accent">⚡ Send 15x Concurrent Batch</button>
+              <button type="button" id="btn-auto-traffic" class="btn btn-outline">▶ Start Auto-Streamer</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Microservice Topology & Health -->
+        <div class="card glass-card">
+          <div class="card-title-row">
+            <h4>🏗️ Microservice Mesh Topology</h4>
+            <span class="live-tag">Live Polling</span>
+          </div>
+          <div class="topology-tree">
+            <div class="service-node active">
+              <div class="node-icon">🌐</div>
+              <div class="node-info">
+                <h5>Frontend Portal</h5>
+                <span>Nginx • Port 8080</span>
+              </div>
+              <span class="badge-status online">Active</span>
+            </div>
+            <div class="node-arrow">⬇ (HTTP / REST)</div>
+            <div class="service-node active" id="node-payment">
+              <div class="node-icon">💳</div>
+              <div class="node-info">
+                <h5>Payment Gateway Service</h5>
+                <span>FastAPI • Port 8000</span>
+              </div>
+              <span class="badge-status online" id="stat-payment">Online</span>
+            </div>
+            <div class="node-arrow">⬇ (Circuit Breaker Protected)</div>
+            <div class="service-node active" id="node-fraud">
+              <div class="node-icon">🛡️</div>
+              <div class="node-info">
+                <h5>Fraud Detection Engine</h5>
+                <span>FastAPI • Port 8001</span>
+              </div>
+              <span class="badge-status online" id="stat-fraud">Online</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Ledger -->
+      <div class="card glass-card mt-4">
+        <div class="card-title-row">
+          <h4>📑 Live Settlement Ledger & Risk Scoring Stream</h4>
+          <span class="badge-info" id="ledger-count">0 Transactions</span>
+        </div>
+        <div class="table-scroll">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>Txn ID</th>
+                <th>Sender</th>
+                <th>Recipient</th>
+                <th>Amount</th>
+                <th>Instrument</th>
+                <th>Risk Score</th>
+                <th>Gateway Latency</th>
+                <th>Decision Status</th>
+              </tr>
+            </thead>
+            <tbody id="ledger-tbody">
+              <tr>
+                <td colspan="8" class="text-center py-6 text-muted">No transactions yet. Click "Process Single Payment" or "Send 15x Concurrent Batch"!</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Student 2 - CI/CD Pipelines & DevSecOps -->
+    <section id="tab-cicd" class="tab-content">
+      <div class="student-callout role-2-border">
+        <div class="callout-header">
+          <span class="badge badge-s2">STUDENT 2 MODULE</span>
+          <h3>Continuous Integration, Delivery & DevSecOps Automation</h3>
+        </div>
+        <p>Demonstrates the multi-stage automated build pipeline configured in GitHub Actions (<code>.github/workflows/ci-cd.yml</code>) and Jenkins (<code>cicd/Jenkinsfile</code>), incorporating PyTest suites, SAST vulnerability scanning, and post-deploy smoke tests.</p>
+      </div>
+
+      <!-- Pipeline Visualizer -->
+      <div class="card glass-card">
+        <div class="card-title-row">
+          <h4>🔄 Multi-Stage CI/CD & DevSecOps Pipeline Visualizer</h4>
+          <button id="btn-trigger-cicd" class="btn btn-sm btn-primary">▶ Run Pipeline Simulation</button>
+        </div>
+
+        <div class="pipeline-flow">
+          <div class="pipeline-step" id="step-lint">
+            <div class="step-num">Stage 1</div>
+            <div class="step-icon">🧪</div>
+            <h5>Lint & PyTest</h5>
+            <p>Flake8 & 8 Unit Tests</p>
+            <div class="step-status pending">Ready</div>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipeline-step" id="step-security">
+            <div class="step-num">Stage 2</div>
+            <div class="step-icon">🛡️</div>
+            <h5>DevSecOps SAST</h5>
+            <p>Secret Scan & Trivy</p>
+            <div class="step-status pending">Ready</div>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipeline-step" id="step-build">
+            <div class="step-num">Stage 3</div>
+            <div class="step-icon">🐳</div>
+            <h5>Docker Build</h5>
+            <p>Multi-Stage Images</p>
+            <div class="step-status pending">Ready</div>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipeline-step" id="step-smoke">
+            <div class="step-num">Stage 4</div>
+            <div class="step-icon">🚀</div>
+            <h5>Deploy & Smoke</h5>
+            <p>Staging Regression Test</p>
+            <div class="step-status pending">Ready</div>
+          </div>
+        </div>
+
+        <!-- Terminal Output Window for Student 2 -->
+        <div class="terminal-box mt-4">
+          <div class="terminal-bar">
+            <div class="term-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="term-title">pipeline-runner@fintech-ci-cd: ~ /logs</span>
+          </div>
+          <pre id="pipeline-terminal" class="terminal-content">Waiting for pipeline trigger... Click "Run Pipeline Simulation" to view live build execution logs.</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: Student 3 - Observability & RED Metrics -->
+    <section id="tab-observability" class="tab-content">
+      <div class="student-callout role-3-border">
+        <div class="callout-header">
+          <span class="badge badge-s3">STUDENT 3 MODULE</span>
+          <h3>Observability, Prometheus Instrumentation & RED Metrics</h3>
+        </div>
+        <p>Demonstrates Prometheus metrics scraping (Rate, Errors, Duration), Grafana visualization, and Alertmanager incident rules for microservice monitoring and threshold breach detection.</p>
+      </div>
+
+      <!-- Live Golden Signals Grid -->
+      <div class="grid-3col mb-4">
+        <div class="metric-card">
+          <span class="metric-subtitle">THROUGHPUT (RATE)</span>
+          <h2 id="metric-rps">0.0 <small>RPS</small></h2>
+          <span class="metric-footer">HTTP requests per sec</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-subtitle">LATENCY (DURATION - p95)</span>
+          <h2 id="metric-p95">14.2 <small>ms</small></h2>
+          <span class="metric-footer highlight-green">Target: &lt; 200 ms</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-subtitle">SERVER ERROR RATE</span>
+          <h2 id="metric-error-rate">0.0 <small>%</small></h2>
+          <span class="metric-footer">HTTP 5xx server errors</span>
+        </div>
+      </div>
+
+      <!-- Real-time Chart.js Canvas -->
+      <div class="grid-2col">
+        <div class="card glass-card">
+          <div class="card-title-row">
+            <h4>📈 Live Request Throughput & RPS</h4>
+            <span class="badge-accent">Prometheus Scrape: 2s</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="chart-throughput"></canvas>
+          </div>
+        </div>
+        <div class="card glass-card">
+          <div class="card-title-row">
+            <h4>⏱️ Latency Percentiles (p50, p90, p99)</h4>
+            <span class="badge-accent">Histogram Quantiles</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="chart-latency"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: Student 4 - SRE SLI/SLO & Chaos Engineering -->
+    <section id="tab-sre" class="tab-content">
+      <div class="student-callout role-4-border">
+        <div class="callout-header">
+          <span class="badge badge-s4">STUDENT 4 MODULE</span>
+          <h3>Site Reliability Engineering (SRE), Error Budgets & Chaos Simulator</h3>
+        </div>
+        <p>Demonstrates SRE availability SLIs (99.9% target), dynamic Error Budget Burn Rate calculation, and synthetic Chaos Engineering (network latency injection, 500 error spikes, downstream collapse simulation).</p>
+      </div>
+
+      <!-- SRE Target & Burn Cards -->
+      <div class="grid-3col mb-4">
+        <div class="metric-card">
+          <span class="metric-subtitle">MEASURED AVAILABILITY SLI</span>
+          <h2 id="sre-sli-val" class="text-emerald">99.98 <small>%</small></h2>
+          <span class="metric-footer">SLO Objective: 99.90%</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-subtitle">ERROR BUDGET REMAINING</span>
+          <h2 id="sre-budget-val" class="text-emerald">100.0 <small>%</small></h2>
+          <span class="metric-footer" id="sre-budget-status">Allowable Unreliability: 0.10%</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-subtitle">ERROR BUDGET BURN RATE</span>
+          <h2 id="sre-burn-val">1.0x <small>Standard</small></h2>
+          <span class="metric-footer" id="sre-burn-status">Status: Normal Velocity</span>
+        </div>
+      </div>
+
+      <div class="grid-2col">
+        <!-- Interactive Chaos Control Console -->
+        <div class="card glass-card chaos-border">
+          <div class="card-title-row">
+            <h4>🧪 SRE Chaos Engineering Injection Suite</h4>
+            <span class="badge-status" id="chaos-live-badge">Chaos Inactive</span>
+          </div>
+          <p class="text-muted text-sm mb-4">Inject artificial faults into the live payment engine to verify SLI degradation, error budget depletion, and automated alert triggering.</p>
+
+          <div class="chaos-slider-group">
+            <div class="slider-header">
+              <label>Artificial Latency Injection</label>
+              <span class="pill-val" id="chaos-latency-lbl">0 ms</span>
+            </div>
+            <input type="range" id="chaos-latency-input" min="0" max="1200" step="50" value="0">
+          </div>
+
+          <div class="chaos-slider-group">
+            <div class="slider-header">
+              <label>Synthetic HTTP 500 Error Spike</label>
+              <span class="pill-val" id="chaos-error-lbl">0%</span>
+            </div>
+            <input type="range" id="chaos-error-input" min="0" max="100" step="5" value="0">
+          </div>
+
+          <div class="toggle-row mb-4">
+            <label class="custom-switch">
+              <input type="checkbox" id="chaos-fraud-toggle">
+              <span class="switch-slider"></span>
+            </label>
+            <span class="toggle-text">Force Downstream High-Risk Fraud Spikes</span>
+          </div>
+
+          <div class="btn-cluster">
+            <button id="btn-fire-chaos" class="btn btn-danger">💥 Apply Chaos Experiment</button>
+            <button id="btn-restore-chaos" class="btn btn-outline">🔄 Restore System Nominal State</button>
+          </div>
+        </div>
+
+        <!-- SRE Incident & Post-Mortem Report Generator -->
+        <div class="card glass-card">
+          <div class="card-title-row">
+            <h4>📋 SRE Compliance & Post-Mortem Generator</h4>
+            <button id="btn-gen-sre-report" class="btn btn-sm btn-accent">Generate SRE Report</button>
+          </div>
+
+          <div class="sre-report-preview" id="sre-report-box">
+            <div class="report-header">
+              <h5>SITE RELIABILITY ENGINEERING (SRE) AUDIT</h5>
+              <span class="report-date" id="report-timestamp">Pending Generation</span>
+            </div>
+            <div class="report-content" id="report-body">
+              Click <strong>"Generate SRE Report"</strong> to audit the current Prometheus SLI performance against the 99.9% SLO agreement and check if feature deployments should be frozen.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Guided Demo Modal for Faculty Presentation -->
+    <div class="modal-overlay" id="demo-modal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>🚀 4-Student Guided Faculty Demo</h3>
+          <button id="btn-close-modal" class="btn-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="demo-step active" id="demo-step-1">
+            <h4>Student 1: Microservices & Payments</h4>
+            <p>Generating 10 live financial transactions to demonstrate async REST communication between Payment Gateway and Fraud Detection Engine...</p>
+            <div class="demo-progress-bar"><div class="fill" style="width: 25%"></div></div>
+          </div>
+          <div class="demo-step" id="demo-step-2">
+            <h4>Student 2: CI/CD & DevSecOps Validation</h4>
+            <p>Executing automated PyTest suites, SAST secret leak scan, and container build validation...</p>
+            <div class="demo-progress-bar"><div class="fill" style="width: 50%"></div></div>
+          </div>
+          <div class="demo-step" id="demo-step-3">
+            <h4>Student 3: Prometheus Metrics & Latency Scrapes</h4>
+            <p>Scraping RED golden signals (Throughput, p95 Latency, Error Rate) and plotting live Prometheus histograms...</p>
+            <div class="demo-progress-bar"><div class="fill" style="width: 75%"></div></div>
+          </div>
+          <div class="demo-step" id="demo-step-4">
+            <h4>Student 4: SRE Chaos & Error Budget Burn</h4>
+            <p>Injecting 450ms network delay + 40% error rate, burning error budget, and verifying SRE incident recovery...</p>
+            <div class="demo-progress-bar"><div class="fill" style="width: 100%"></div></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-next-demo-step" class="btn btn-primary">Next Step ➔</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
